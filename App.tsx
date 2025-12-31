@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect, useCallback, useMemo } from 'react';
 import Header from './components/Header';
 import Hero from './components/Hero';
@@ -134,8 +133,8 @@ const App: React.FC = () => {
               <Hero item={heroItem} service={service} onOpenDetails={setSelectedItem} />
             )}
             
-            {/* Adjusted negative margin to prevent content overlap with hero buttons */}
-            <div className={`transition-all duration-1000 ${heroItem && !loading ? '-mt-24 md:-mt-44' : 'pt-32'} relative z-10 space-y-12`}>
+            {/* Adjusted negative margin to prevent content overlap with hero buttons/text */}
+            <div className={`transition-all duration-1000 ${heroItem && !loading ? '-mt-16 md:-mt-32' : 'pt-32'} relative z-10 space-y-12`}>
               {loading ? (
                 <div className="px-6 md:px-16 space-y-20">
                   <div className="space-y-6"><div className="h-8 w-64 bg-zinc-900 rounded-full animate-pulse"></div><div className="flex gap-6 overflow-hidden"><CardSkeleton/><CardSkeleton/><CardSkeleton/><CardSkeleton/><CardSkeleton/></div></div>

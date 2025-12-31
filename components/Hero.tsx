@@ -1,4 +1,3 @@
-
 import React from 'react';
 import { Play, Info, Star, ChevronDown } from 'lucide-react';
 import { Movie, TVShow } from '../types';
@@ -31,7 +30,7 @@ const Hero: React.FC<HeroProps> = ({ item, service, onOpenDetails }) => {
       <div className="absolute inset-0 bg-[#050505]/20 backdrop-brightness-75" />
       
       {/* Content Container with increased bottom padding to avoid overlap with rows */}
-      <div className="absolute inset-0 flex flex-col justify-end pb-56 md:pb-72 px-6 md:px-16 space-y-8">
+      <div className="absolute inset-0 flex flex-col justify-end pb-64 md:pb-80 px-6 md:px-16 space-y-8">
         <div className="space-y-4 max-w-4xl">
           <div className="flex items-center gap-4 animate-reveal" style={{ animationDelay: '0.1s' }}>
             <div className="flex items-center gap-1.5 bg-red-600 px-3 py-1 rounded-full text-[10px] font-black uppercase tracking-widest shadow-lg shadow-red-600/40">
