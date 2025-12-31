@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect, useCallback, useMemo } from 'react';
 import Header from './components/Header';
 import Hero from './components/Hero';
@@ -56,7 +57,7 @@ const App: React.FC = () => {
     } catch (err: any) {
       console.error(err);
     } finally {
-      setTimeout(() => setLoading(false), 800); // Artificial delay for smoother transition
+      setTimeout(() => setLoading(false), 800);
     }
   }, [service]);
 
@@ -101,27 +102,27 @@ const App: React.FC = () => {
         onApplyFilters={(f) => console.log(f)} 
       />
 
-      <main className="relative pb-40">
+      <main className="relative pb-24">
         {activeTab === 'calendar' ? (
-          <div className="pt-32"><CalendarView service={service!} onOpenDetails={setSelectedItem} /></div>
+          <div className="pt-24 md:pt-32"><CalendarView service={service!} onOpenDetails={setSelectedItem} /></div>
         ) : searchQuery ? (
-          <div className="pt-40 px-6 md:px-16 animate-reveal">
-             <div className="flex items-center gap-4 mb-16">
-               <h2 className="text-4xl md:text-6xl font-black uppercase italic tracking-tighter">
+          <div className="pt-32 md:pt-40 px-6 md:px-16 animate-reveal">
+             <div className="flex items-center gap-4 mb-10 md:mb-16">
+               <h2 className="text-3xl md:text-6xl font-black uppercase italic tracking-tighter">
                  Resultados <span className="text-zinc-500">para</span> <span className="text-red-600">"{searchQuery}"</span>
                </h2>
              </div>
-             <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-8">
+             <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-4 md:gap-8">
                {searchResults.map((item, idx) => (
                  <div 
                   key={item.id} 
                   onClick={() => setSelectedItem(item)} 
-                  className="group relative aspect-[2/3] rounded-[2.5rem] overflow-hidden cursor-pointer transition-all duration-700 hover:scale-105 hover:-translate-y-2 border border-white/5 bg-zinc-900 shadow-2xl animate-reveal"
+                  className="group relative aspect-[2/3] rounded-2xl md:rounded-[2.5rem] overflow-hidden cursor-pointer transition-all duration-700 hover:scale-105 border border-white/5 bg-zinc-900 shadow-2xl animate-reveal"
                   style={{ animationDelay: `${idx * 50}ms` }}
                 >
                     <img src={service?.getPosterUrl(item.poster_path, 'w342')} className="w-full h-full object-cover transition-transform duration-1000 group-hover:scale-110" alt="" />
-                    <div className="absolute inset-0 bg-gradient-to-t from-black via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-all duration-500 flex flex-col justify-end p-6">
-                       <p className="text-xs font-black uppercase tracking-tighter text-white truncate">{item.title || item.name}</p>
+                    <div className="absolute inset-0 bg-gradient-to-t from-black via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-all duration-500 flex flex-col justify-end p-4">
+                       <p className="text-[10px] md:text-xs font-black uppercase tracking-tighter text-white truncate">{item.title || item.name}</p>
                     </div>
                  </div>
                ))}
@@ -133,12 +134,11 @@ const App: React.FC = () => {
               <Hero item={heroItem} service={service} onOpenDetails={setSelectedItem} />
             )}
             
-            {/* Adjusted negative margin to prevent content overlap with hero buttons/text */}
-            <div className={`transition-all duration-1000 ${heroItem && !loading ? '-mt-16 md:-mt-32' : 'pt-32'} relative z-10 space-y-12`}>
+            {/* NO NEGATIVE MARGIN ON MOBILE to fix overlap */}
+            <div className={`transition-all duration-1000 ${heroItem && !loading ? 'mt-4 md:-mt-24' : 'pt-24 md:pt-32'} relative z-10 space-y-8 md:space-y-12`}>
               {loading ? (
-                <div className="px-6 md:px-16 space-y-20">
-                  <div className="space-y-6"><div className="h-8 w-64 bg-zinc-900 rounded-full animate-pulse"></div><div className="flex gap-6 overflow-hidden"><CardSkeleton/><CardSkeleton/><CardSkeleton/><CardSkeleton/><CardSkeleton/></div></div>
-                  <div className="space-y-6"><div className="h-8 w-64 bg-zinc-900 rounded-full animate-pulse"></div><div className="flex gap-6 overflow-hidden"><CardSkeleton/><CardSkeleton/><CardSkeleton/><CardSkeleton/><CardSkeleton/></div></div>
+                <div className="px-6 md:px-16 space-y-12 md:space-y-20">
+                  <div className="space-y-6"><div className="h-6 w-48 md:h-8 md:w-64 bg-zinc-900 rounded-full animate-pulse"></div><div className="flex gap-4 md:gap-6 overflow-hidden"><CardSkeleton/><CardSkeleton/><CardSkeleton/></div></div>
                 </div>
               ) : (
                 sections.map((section, idx) => (
