@@ -134,8 +134,8 @@ const App: React.FC = () => {
               <Hero item={heroItem} service={service} onOpenDetails={setSelectedItem} />
             )}
             
-            {/* NO NEGATIVE MARGIN ON MOBILE to fix overlap */}
-            <div className={`transition-all duration-1000 ${heroItem && !loading ? 'mt-4 md:-mt-24' : 'pt-24 md:pt-32'} relative z-10 space-y-8 md:space-y-12`}>
+            {/* Margen negativo aplicado en móviles para compactar la UI */}
+            <div className={`transition-all duration-1000 ${heroItem && !loading ? '-mt-20 md:-mt-24' : 'pt-24 md:pt-32'} relative z-10 space-y-8 md:space-y-12`}>
               {loading ? (
                 <div className="px-6 md:px-16 space-y-12 md:space-y-20">
                   <div className="space-y-6"><div className="h-6 w-48 md:h-8 md:w-64 bg-zinc-900 rounded-full animate-pulse"></div><div className="flex gap-4 md:gap-6 overflow-hidden"><CardSkeleton/><CardSkeleton/><CardSkeleton/></div></div>

@@ -15,7 +15,7 @@ const Hero: React.FC<HeroProps> = ({ item, service, onOpenDetails }) => {
   const overview = item.overview.length > 200 ? item.overview.substring(0, 200) + '...' : item.overview;
 
   return (
-    <div className="relative h-[85vh] md:h-[92vh] w-full overflow-hidden">
+    <div className="relative h-[80vh] md:h-[92vh] w-full overflow-hidden">
       {/* Background with subtle zoom animation */}
       <div className="absolute inset-0 scale-105 animate-[zoomIn_20s_ease-out_infinite_alternate]">
         <img
@@ -27,9 +27,10 @@ const Hero: React.FC<HeroProps> = ({ item, service, onOpenDetails }) => {
 
       {/* Complex Overlays for depth */}
       <div className="absolute inset-0 bg-gradient-to-r from-[#050505] via-[#050505]/60 to-transparent" />
-      <div className="absolute inset-0 bg-gradient-to-t from-[#050505] via-[#050505]/20 to-transparent" />
+      <div className="absolute inset-0 bg-gradient-to-t from-[#050505] via-[#050505]/40 to-transparent" />
       
-      <div className="absolute inset-0 flex flex-col justify-end pb-24 md:pb-48 px-6 md:px-16 space-y-6 md:space-y-8">
+      {/* Content Container: increased pb-32 for mobile to push content up */}
+      <div className="absolute inset-0 flex flex-col justify-end pb-32 md:pb-48 px-6 md:px-16 space-y-6 md:space-y-8">
         <div className="space-y-3 md:space-y-4 max-w-4xl">
           <div className="flex items-center gap-3 animate-reveal" style={{ animationDelay: '0.1s' }}>
             <div className="flex items-center gap-1 bg-red-600 px-2 py-0.5 md:px-3 md:py-1 rounded-full text-[8px] md:text-[10px] font-black uppercase tracking-widest shadow-lg shadow-red-600/40">
