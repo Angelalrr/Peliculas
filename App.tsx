@@ -7,7 +7,7 @@ import DetailsModal from './components/DetailsModal';
 import ApiKeyPrompt from './components/ApiKeyPrompt';
 import FilterBar from './components/FilterBar';
 import CalendarView from './components/CalendarView';
-import { HeroSkeleton } from './components/Skeleton';
+import { HeroSkeleton, CardSkeleton } from './components/Skeleton';
 import { TMDBService } from './services/tmdb';
 import { Movie, TVShow } from './types';
 
@@ -23,13 +23,10 @@ const App: React.FC = () => {
   const [heroItem, setHeroItem] = useState<Movie | TVShow | null>(null);
   const [sections, setSections] = useState<{title: string, items: any[]}[]>([]);
   const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
   const [selectedItem, setSelectedItem] = useState<any>(null);
   const [searchQuery, setSearchQuery] = useState('');
-  const [originalQuery, setOriginalQuery] = useState('');
   const [searchResults, setSearchResults] = useState<any[]>([]);
   const [isFilterOpen, setIsFilterOpen] = useState(false);
-  const [activeFilters, setActiveFilters] = useState<any>(null);
 
   const service = useMemo(() => (apiKey ? new TMDBService(apiKey) : null), [apiKey]);
 
@@ -37,8 +34,6 @@ const App: React.FC = () => {
     if (!service) return;
     try {
       setLoading(true);
-      setError(null);
-      
       const [trending, popularMovies, topMovies, upcoming, popularTV, topTV] = await Promise.all([
         service.getTrending('all', 'day'),
         service.getMovies('popular'),
@@ -52,24 +47,23 @@ const App: React.FC = () => {
       setHeroItem(validHeroItems[Math.floor(Math.random() * validHeroItems.length)]);
 
       setSections([
-        { title: 'Global Trending', items: trending.results },
-        { title: 'Popular Cinema', items: popularMovies.results },
-        { title: 'Critics Choice', items: topMovies.results },
-        { title: 'Binge-worthy TV', items: popularTV.results },
-        { title: 'New Arrivals', items: upcoming.results },
-        { title: 'TV Masterpieces', items: topTV.results },
+        { title: 'Tendencias Globales', items: trending.results },
+        { title: 'Cine más Popular', items: popularMovies.results },
+        { title: 'Favoritos de la Crítica', items: topMovies.results },
+        { title: 'Series Imprescindibles', items: popularTV.results },
+        { title: 'Próximamente en Pantalla', items: upcoming.results },
+        { title: 'Obras Maestras TV', items: topTV.results },
       ]);
     } catch (err: any) {
-      setError(err.message);
+      console.error(err);
     } finally {
-      setLoading(false);
+      setTimeout(() => setLoading(false), 800); // Artificial delay for smoother transition
     }
   }, [service]);
 
   useEffect(() => {
     if (!apiKey) return;
     if (activeTab === 'home') fetchHomeData();
-    // Simplified for UX demo
   }, [activeTab, apiKey, fetchHomeData]);
 
   const handleSearch = async (query: string) => {
@@ -78,7 +72,6 @@ const App: React.FC = () => {
       setSearchResults([]);
       return;
     }
-    setOriginalQuery(query);
     setSearchQuery(query);
     if (!service) return;
     try {
@@ -92,29 +85,43 @@ const App: React.FC = () => {
   if (!apiKey) return <ApiKeyPrompt onKeySubmit={setApiKey} />;
 
   return (
-    <div className="min-h-screen bg-[#050505] text-white">
+    <div className="min-h-screen bg-[#050505] text-white selection:bg-red-600 selection:text-white">
       <Header 
         onSearch={handleSearch} 
-        onOpenSettings={() => {}}
+        onOpenSettings={() => setApiKey(null)}
         activeTab={activeTab}
         setActiveTab={setActiveTab}
         isFilterOpen={isFilterOpen}
         setIsFilterOpen={setIsFilterOpen}
       />
 
-      <main className="pb-32">
+      <FilterBar 
+        isOpen={isFilterOpen} 
+        onClose={() => setIsFilterOpen(false)} 
+        service={service!} 
+        onApplyFilters={(f) => console.log(f)} 
+      />
+
+      <main className="relative pb-40">
         {activeTab === 'calendar' ? (
-          <CalendarView service={service!} onOpenDetails={setSelectedItem} />
+          <div className="pt-32"><CalendarView service={service!} onOpenDetails={setSelectedItem} /></div>
         ) : searchQuery ? (
-          <div className="pt-32 px-6 md:px-16 animate-fade-in">
-             <h2 className="text-4xl font-black uppercase italic mb-12 flex items-center gap-4">
-               <span className="text-zinc-500">Search:</span> <span className="text-red-600">"{originalQuery}"</span>
-             </h2>
+          <div className="pt-40 px-6 md:px-16 animate-reveal">
+             <div className="flex items-center gap-4 mb-16">
+               <h2 className="text-4xl md:text-6xl font-black uppercase italic tracking-tighter">
+                 Resultados <span className="text-zinc-500">para</span> <span className="text-red-600">"{searchQuery}"</span>
+               </h2>
+             </div>
              <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-8">
-               {searchResults.map(item => (
-                 <div key={item.id} onClick={() => setSelectedItem(item)} className="aspect-[2/3] rounded-[2rem] overflow-hidden cursor-pointer hover:scale-105 transition-all duration-500 border border-white/5 bg-zinc-900 group shadow-2xl">
-                    <img src={service?.getPosterUrl(item.poster_path, 'w342')} className="w-full h-full object-cover" alt="" />
-                    <div className="absolute inset-0 bg-black/60 opacity-0 group-hover:opacity-100 transition-opacity flex flex-col justify-end p-6">
+               {searchResults.map((item, idx) => (
+                 <div 
+                  key={item.id} 
+                  onClick={() => setSelectedItem(item)} 
+                  className="group relative aspect-[2/3] rounded-[2.5rem] overflow-hidden cursor-pointer transition-all duration-700 hover:scale-105 hover:-translate-y-2 border border-white/5 bg-zinc-900 shadow-2xl animate-reveal"
+                  style={{ animationDelay: `${idx * 50}ms` }}
+                >
+                    <img src={service?.getPosterUrl(item.poster_path, 'w342')} className="w-full h-full object-cover transition-transform duration-1000 group-hover:scale-110" alt="" />
+                    <div className="absolute inset-0 bg-gradient-to-t from-black via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-all duration-500 flex flex-col justify-end p-6">
                        <p className="text-xs font-black uppercase tracking-tighter text-white truncate">{item.title || item.name}</p>
                     </div>
                  </div>
@@ -123,11 +130,24 @@ const App: React.FC = () => {
           </div>
         ) : (
           <>
-            {loading ? <HeroSkeleton /> : heroItem && service && <Hero item={heroItem} service={service} onOpenDetails={setSelectedItem} />}
-            <div className={`transition-all duration-1000 ${heroItem ? '-mt-48' : 'pt-32'} relative z-10 space-y-4`}>
-              {sections.map((section, idx) => (
-                service && <Row key={idx} title={section.title} items={section.items} service={service} onOpenDetails={setSelectedItem} />
-              ))}
+            {loading ? <HeroSkeleton /> : heroItem && service && (
+              <Hero item={heroItem} service={service} onOpenDetails={setSelectedItem} />
+            )}
+            
+            {/* Adjusted negative margin to prevent content overlap with hero buttons */}
+            <div className={`transition-all duration-1000 ${heroItem && !loading ? '-mt-24 md:-mt-44' : 'pt-32'} relative z-10 space-y-12`}>
+              {loading ? (
+                <div className="px-6 md:px-16 space-y-20">
+                  <div className="space-y-6"><div className="h-8 w-64 bg-zinc-900 rounded-full animate-pulse"></div><div className="flex gap-6 overflow-hidden"><CardSkeleton/><CardSkeleton/><CardSkeleton/><CardSkeleton/><CardSkeleton/></div></div>
+                  <div className="space-y-6"><div className="h-8 w-64 bg-zinc-900 rounded-full animate-pulse"></div><div className="flex gap-6 overflow-hidden"><CardSkeleton/><CardSkeleton/><CardSkeleton/><CardSkeleton/><CardSkeleton/></div></div>
+                </div>
+              ) : (
+                sections.map((section, idx) => (
+                  <div key={idx} className="animate-reveal" style={{ animationDelay: `${idx * 150}ms` }}>
+                    <Row title={section.title} items={section.items} service={service!} onOpenDetails={setSelectedItem} />
+                  </div>
+                ))
+              )}
             </div>
           </>
         )}

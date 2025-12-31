@@ -12,6 +12,7 @@
         :root {
             --accent: #E50914;
             --bg-deep: #050505;
+            --premium-bezier: cubic-bezier(0.16, 1, 0.3, 1);
         }
         body {
             font-family: 'Inter', sans-serif;
@@ -21,10 +22,15 @@
             overflow-x: hidden;
             letter-spacing: -0.01em;
         }
-        /* Custom scrollbar optimized */
+        
+        /* Custom Smooth Scroll */
+        html {
+            scroll-behavior: smooth;
+        }
+
+        /* Scrollbar refined */
         ::-webkit-scrollbar {
-            width: 6px;
-            height: 6px;
+            width: 5px;
         }
         ::-webkit-scrollbar-track {
             background: transparent;
@@ -32,30 +38,46 @@
         ::-webkit-scrollbar-thumb {
             background: rgba(255, 255, 255, 0.1);
             border-radius: 10px;
+            transition: background 0.3s;
         }
         ::-webkit-scrollbar-thumb:hover {
             background: var(--accent);
         }
-        .cinematic-gradient {
-            background: linear-gradient(180deg, rgba(5,5,5,0) 0%, rgba(5,5,5,0.8) 70%, rgba(5,5,5,1) 100%);
+
+        /* Premium Animations */
+        @keyframes revealItem {
+            from { opacity: 0; transform: translateY(20px) scale(0.98); }
+            to { opacity: 1; transform: translateY(0) scale(1); }
         }
-        .glass-panel {
-            background: rgba(20, 20, 20, 0.6);
-            backdrop-filter: blur(20px);
-            border: 1px solid rgba(255, 255, 255, 0.05);
+
+        @keyframes shimmer {
+            0% { background-position: -200% 0; }
+            100% { background-position: 200% 0; }
         }
-        .text-glow {
-            text-shadow: 0 0 30px rgba(229, 9, 20, 0.4);
+
+        .animate-reveal {
+            animation: revealItem 0.8s var(--premium-bezier) forwards;
         }
-        @keyframes fadeIn {
-            from { opacity: 0; transform: translateY(10px); }
-            to { opacity: 1; transform: translateY(0); }
+
+        .glass-premium {
+            background: rgba(10, 10, 10, 0.7);
+            backdrop-filter: blur(25px) saturate(180%);
+            border: 1px solid rgba(255, 255, 255, 0.08);
         }
-        .animate-fade-in {
-            animation: fadeIn 0.6s cubic-bezier(0.16, 1, 0.3, 1) forwards;
-        }
+
         .no-scrollbar::-webkit-scrollbar {
             display: none;
+        }
+
+        /* Mask for smooth edge fading on rows */
+        .row-mask {
+            mask-image: linear-gradient(to right, transparent, black 5%, black 95%, transparent);
+        }
+        
+        /* Card Glow Effect */
+        .card-glow:hover {
+            box-shadow: 0 0 30px rgba(229, 9, 20, 0.2);
+            border-color: rgba(229, 9, 20, 0.4);
         }
     </style>
 <script type="importmap">
@@ -68,10 +90,8 @@
   }
 }
 </script>
-<link rel="stylesheet" href="/index.css">
 </head>
 <body>
     <div id="root"></div>
-<script type="module" src="/index.tsx"></script>
 </body>
 </html>

@@ -1,6 +1,6 @@
 
 import React, { useState, useEffect, useRef } from 'react';
-import { Search, Bell, User, Settings, LogOut, Menu, X, Trash2, Filter, Calendar as CalendarIcon } from 'lucide-react';
+import { Search, Settings, Menu, X, Filter, ChevronDown } from 'lucide-react';
 
 interface HeaderProps {
   onSearch: (query: string) => void;
@@ -15,14 +15,14 @@ const Header: React.FC<HeaderProps> = ({ onSearch, onOpenSettings, activeTab, se
   const [isScrolled, setIsScrolled] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
-  const [isSearchActive, setIsSearchActive] = useState(false);
+  const [isSearchFocused, setIsSearchFocused] = useState(false);
   const searchInputRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
     const handleScroll = () => {
-      setIsScrolled(window.scrollY > 0);
+      setIsScrolled(window.scrollY > 50);
     };
-    window.addEventListener('scroll', handleScroll);
+    window.addEventListener('scroll', handleScroll, { passive: true });
     return () => window.removeEventListener('scroll', handleScroll);
   }, []);
 
@@ -33,107 +33,95 @@ const Header: React.FC<HeaderProps> = ({ onSearch, onOpenSettings, activeTab, se
     }
   };
 
-  const handleClearSearch = () => {
-    setSearchQuery('');
-    onSearch('');
-    searchInputRef.current?.focus();
-  };
-
-  const navItems: { id: 'home' | 'movies' | 'tv' | 'calendar', label: string }[] = [
+  const navItems = [
     { id: 'home', label: 'Inicio' },
     { id: 'movies', label: 'Películas' },
     { id: 'tv', label: 'Series' },
-    { id: 'calendar', label: 'Calendario' }
+    { id: 'calendar', label: 'Estrenos' }
   ];
 
   return (
-    <nav className={`fixed top-0 w-full z-[150] transition-all duration-500 px-4 md:px-12 py-3 md:py-4 flex items-center justify-between ${isScrolled ? 'bg-black/90 backdrop-blur-xl shadow-2xl py-2' : 'bg-gradient-to-b from-black/95 via-black/50 to-transparent'}`}>
-      <div className="flex items-center gap-4 md:gap-12">
-        <h1 
-          className="text-red-600 text-2xl md:text-4xl font-black tracking-tighter cursor-pointer hover:scale-105 transition-transform italic" 
-          onClick={() => {
-            setActiveTab('home');
-            setSearchQuery('');
-          }}
-        >
-          CINEWAVE
-        </h1>
-        
-        <div className="hidden md:flex items-center gap-8 text-xs font-black uppercase tracking-widest text-zinc-400">
-          {navItems.map(item => (
-            <button 
-              key={item.id}
-              onClick={() => setActiveTab(item.id)}
-              className={`hover:text-white transition-all relative py-2 ${activeTab === item.id ? 'text-white' : ''}`}>
-              {item.label}
-              {activeTab === item.id && <div className="absolute bottom-0 left-0 w-full h-1 bg-red-600 rounded-full animate-in zoom-in" />}
-            </button>
-          ))}
+    <nav className={`fixed top-0 w-full z-[1000] transition-all duration-700 ease-[cubic-bezier(0.16,1,0.3,1)] px-6 md:px-16 ${isScrolled ? 'py-3 bg-[#050505]/80 backdrop-blur-2xl border-b border-white/5 shadow-2xl' : 'py-8 bg-transparent'}`}>
+      <div className="max-w-[1920px] mx-auto flex items-center justify-between">
+        <div className="flex items-center gap-16">
+          <h1 
+            className="text-red-600 text-3xl md:text-4xl font-black tracking-tighter cursor-pointer hover:scale-105 transition-transform italic select-none" 
+            onClick={() => setActiveTab('home')}
+          >
+            CINEWAVE
+          </h1>
+          
+          <div className="hidden lg:flex items-center gap-10 text-[11px] font-black uppercase tracking-[0.2em] text-zinc-400">
+            {navItems.map(item => (
+              <button 
+                key={item.id}
+                onClick={() => setActiveTab(item.id as any)}
+                className={`group relative py-2 transition-all hover:text-white ${activeTab === item.id ? 'text-white' : ''}`}
+              >
+                {item.label}
+                <span className={`absolute -bottom-1 left-0 h-[2px] bg-red-600 transition-all duration-500 ${activeTab === item.id ? 'w-full' : 'w-0 group-hover:w-1/2'}`} />
+              </button>
+            ))}
+          </div>
         </div>
-      </div>
 
-      <div className="flex items-center gap-2 md:gap-6">
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-6">
+          {/* Enhanced Search Input */}
           <form 
             onSubmit={handleSearchSubmit} 
-            className={`relative group transition-all duration-300 ${isSearchActive ? 'w-48 md:w-80' : 'w-40 md:w-64'}`}
-            onFocus={() => setIsSearchActive(true)}
-            onBlur={() => !searchQuery && setIsSearchActive(false)}
+            className={`relative flex items-center transition-all duration-700 ease-[cubic-bezier(0.16,1,0.3,1)] ${isSearchFocused || searchQuery ? 'w-48 md:w-96' : 'w-10 md:w-64'}`}
           >
             <input
               ref={searchInputRef}
               type="text"
-              placeholder="Películas, actores..."
-              className="w-full bg-white/5 backdrop-blur-md border border-white/10 text-white pl-10 pr-10 py-2 rounded-full text-xs font-bold focus:outline-none focus:border-red-600/50 focus:bg-black/80 transition-all placeholder:text-zinc-600"
+              placeholder="Películas, directores..."
+              className={`w-full bg-white/5 backdrop-blur-xl border border-white/10 text-white pl-12 pr-4 py-3 rounded-2xl text-xs font-bold focus:outline-none focus:border-red-600/50 focus:bg-white/10 transition-all placeholder:text-zinc-600 ${isSearchFocused || searchQuery ? 'opacity-100' : 'opacity-0 md:opacity-100'}`}
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
+              onFocus={() => setIsSearchFocused(true)}
+              onBlur={() => setIsSearchFocused(false)}
             />
-            <Search className={`absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 transition-colors ${isSearchActive ? 'text-red-600' : 'text-zinc-500'}`} />
-            {searchQuery && (
-              <button 
-                type="button" 
-                onClick={handleClearSearch}
-                className="absolute right-3.5 top-1/2 -translate-y-1/2 hover:text-white text-zinc-500"
-              >
-                <X className="w-4 h-4" />
-              </button>
-            )}
+            <Search className={`absolute left-4 w-5 h-5 transition-colors ${isSearchFocused ? 'text-red-600' : 'text-zinc-500'}`} />
           </form>
 
+          <div className="flex items-center gap-3">
+            <button 
+              onClick={() => setIsFilterOpen(!isFilterOpen)}
+              className={`p-3 rounded-2xl border transition-all duration-500 ${isFilterOpen ? 'bg-red-600 border-red-600 text-white rotate-90 shadow-lg shadow-red-600/40' : 'bg-white/5 border-white/10 text-zinc-400 hover:text-white hover:bg-white/10'}`}
+            >
+              <Filter className="w-5 h-5" />
+            </button>
+
+            <button 
+              onClick={onOpenSettings} 
+              className="hidden md:flex p-3 text-zinc-400 hover:text-white transition-all bg-white/5 border border-white/10 rounded-2xl hover:bg-white/10"
+            >
+              <Settings className="w-5 h-5" />
+            </button>
+          </div>
+          
           <button 
-            onClick={() => setIsFilterOpen(!isFilterOpen)}
-            className={`p-2.5 rounded-full border transition-all ${isFilterOpen ? 'bg-red-600 border-red-600 text-white shadow-[0_0_15px_rgba(229,9,20,0.4)]' : 'bg-zinc-900/50 border-zinc-800 text-zinc-400 hover:text-white'}`}
-            title="Filtros avanzados"
+            className="lg:hidden p-3 text-white bg-red-600 rounded-2xl shadow-lg shadow-red-600/30" 
+            onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
           >
-            <Filter className="w-4 h-4" />
+            {isMobileMenuOpen ? <X className="w-6 h-6" /> : <Menu className="w-6 h-6" />}
           </button>
         </div>
-
-        <button 
-          onClick={onOpenSettings} 
-          className="p-2 text-zinc-400 hover:text-white transition-colors bg-zinc-900/50 rounded-full hover:bg-zinc-800"
-          title="Configuración de API"
-        >
-          <Settings className="w-5 h-5" />
-        </button>
-        
-        <button className="md:hidden p-2 text-white bg-red-600 rounded-full ml-2" onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}>
-          {isMobileMenuOpen ? <X className="w-5 h-5" /> : <Menu className="w-5 h-5" />}
-        </button>
       </div>
 
-      {isMobileMenuOpen && (
-        <div className="fixed inset-0 top-[60px] w-full bg-black/98 z-[60] p-8 flex flex-col gap-6 text-2xl font-black uppercase italic md:hidden animate-in slide-in-from-right duration-300">
-           {navItems.map(item => (
-             <button 
-               key={item.id}
-               className={`text-left border-b border-zinc-900 pb-4 ${activeTab === item.id ? 'text-red-600' : ''}`}
-               onClick={() => { setActiveTab(item.id); setIsMobileMenuOpen(false); setSearchQuery(''); }}>
-               {item.label}
-             </button>
-           ))}
-        </div>
-      )}
+      {/* Mobile Menu with Staggered Fade */}
+      <div className={`fixed inset-0 top-0 left-0 w-full h-screen bg-[#050505] z-[999] p-12 flex flex-col justify-center gap-8 transition-all duration-700 ease-[cubic-bezier(0.16,1,0.3,1)] ${isMobileMenuOpen ? 'translate-x-0' : 'translate-x-full'}`}>
+        <button onClick={() => setIsMobileMenuOpen(false)} className="absolute top-10 right-10 p-4 bg-white/5 rounded-full"><X className="w-8 h-8" /></button>
+        {navItems.map((item, idx) => (
+          <button 
+            key={item.id}
+            className={`text-5xl font-black uppercase italic text-left tracking-tighter transition-all duration-700 delay-[${idx * 100}ms] ${activeTab === item.id ? 'text-red-600 translate-x-4' : 'text-zinc-800 hover:text-white'}`}
+            onClick={() => { setActiveTab(item.id as any); setIsMobileMenuOpen(false); }}
+          >
+            {item.label}
+          </button>
+        ))}
+      </div>
     </nav>
   );
 };
