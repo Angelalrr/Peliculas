@@ -113,19 +113,28 @@ const App: React.FC = () => {
                </h2>
              </div>
              <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-4 md:gap-8">
-               {searchResults.map((item, idx) => (
-                 <div 
-                  key={item.id} 
-                  onClick={() => setSelectedItem(item)} 
-                  className="group relative aspect-[2/3] rounded-2xl md:rounded-[2.5rem] overflow-hidden cursor-pointer transition-all duration-700 hover:scale-105 border border-white/5 bg-zinc-900 shadow-2xl animate-reveal"
-                  style={{ animationDelay: `${idx * 50}ms` }}
-                >
-                    <img src={service?.getPosterUrl(item.poster_path, 'w342')} className="w-full h-full object-cover transition-transform duration-1000 group-hover:scale-110" alt="" />
-                    <div className="absolute inset-0 bg-gradient-to-t from-black via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-all duration-500 flex flex-col justify-end p-4">
-                       <p className="text-[10px] md:text-xs font-black uppercase tracking-tighter text-white truncate">{item.title || item.name}</p>
-                    </div>
-                 </div>
-               ))}
+               {searchResults.map((item, idx) => {
+                 // Corregimos la lógica de selección de imagen para asegurar que perfiles de actores funcionen
+                 const imagePath = item.poster_path || item.profile_path || item.backdrop_path;
+                 return (
+                   <div 
+                    key={item.id} 
+                    onClick={() => setSelectedItem(item)} 
+                    className="group relative aspect-[2/3] rounded-[1.5rem] md:rounded-[2.5rem] overflow-hidden cursor-pointer transition-all duration-700 hover:scale-105 border border-white/5 bg-zinc-900 shadow-2xl animate-reveal"
+                    style={{ animationDelay: `${idx * 50}ms` }}
+                  >
+                      <img 
+                        src={service?.getPosterUrl(imagePath, 'w500')} 
+                        className="w-full h-full object-cover transition-transform duration-1000 group-hover:scale-110" 
+                        alt={item.title || item.name} 
+                      />
+                      <div className="absolute inset-0 bg-gradient-to-t from-black via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-all duration-500 flex flex-col justify-end p-4">
+                         <p className="text-[10px] md:text-xs font-black uppercase tracking-tighter text-white truncate">{item.title || item.name}</p>
+                         <p className="text-[8px] text-zinc-400 font-bold uppercase tracking-widest">{item.media_type === 'person' ? 'Actor' : (item.media_type || 'Contenido')}</p>
+                      </div>
+                   </div>
+                 );
+               })}
              </div>
           </div>
         ) : (
@@ -134,7 +143,6 @@ const App: React.FC = () => {
               <Hero item={heroItem} service={service} onOpenDetails={setSelectedItem} />
             )}
             
-            {/* Margen negativo aplicado en móviles para compactar la UI */}
             <div className={`transition-all duration-1000 ${heroItem && !loading ? '-mt-20 md:-mt-24' : 'pt-24 md:pt-32'} relative z-10 space-y-8 md:space-y-12`}>
               {loading ? (
                 <div className="px-6 md:px-16 space-y-12 md:space-y-20">

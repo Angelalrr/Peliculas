@@ -41,8 +41,12 @@ const Header: React.FC<HeaderProps> = ({ onSearch, onOpenSettings, activeTab, se
   ];
 
   return (
-    <nav className={`fixed top-0 w-full z-[1000] transition-all duration-500 px-4 md:px-16 ${isScrolled ? 'py-2 md:py-3 bg-[#050505]/95 backdrop-blur-xl border-b border-white/5 shadow-2xl' : 'py-6 md:py-8 bg-transparent'}`}>
-      <div className="max-w-[1920px] mx-auto flex items-center justify-between">
+    <nav className={`fixed top-0 w-full z-[1000] transition-all duration-500 px-4 md:px-16 ${
+      isScrolled 
+        ? 'py-2 md:py-3 bg-[#050505]/98 backdrop-blur-3xl border-b border-white/5 shadow-2xl' 
+        : 'pt-10 pb-4 md:py-8 bg-transparent'
+    }`}>
+      <div className="max-w-[1920px] mx-auto flex items-center justify-between gap-4">
         <div className="flex items-center gap-6 lg:gap-16">
           <h1 
             className="text-red-600 text-2xl md:text-4xl font-black tracking-tighter cursor-pointer italic select-none shrink-0" 
@@ -65,37 +69,40 @@ const Header: React.FC<HeaderProps> = ({ onSearch, onOpenSettings, activeTab, se
           </div>
         </div>
 
-        <div className="flex items-center gap-3 md:gap-6 flex-1 justify-end">
-          <form 
-            onSubmit={handleSearchSubmit} 
-            className={`relative flex items-center transition-all duration-500 ${isSearchFocused || searchQuery ? 'w-full md:w-96' : 'w-10 md:w-64'}`}
-          >
-            <input
-              ref={searchInputRef}
-              type="text"
-              placeholder="Buscar..."
-              className={`w-full bg-white/5 backdrop-blur-xl border border-white/10 text-white pl-10 pr-4 py-2 md:py-3 rounded-xl text-xs font-bold focus:outline-none focus:border-red-600/50 transition-all ${isSearchFocused || searchQuery ? 'opacity-100' : 'opacity-0 md:opacity-100'}`}
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-              onFocus={() => setIsSearchFocused(true)}
-              onBlur={() => setIsSearchFocused(false)}
-            />
-            <Search className={`absolute left-3 w-4 h-4 md:w-5 md:h-5 text-zinc-500`} />
-          </form>
+        <div className="flex items-center gap-2 md:gap-6 flex-1 justify-end">
+          {/* El "cuadro negro" solicitado, ahora con más presencia y desplazado por el pt-10 del nav */}
+          <div className="flex items-center gap-1.5 md:gap-4 bg-black/90 md:bg-black/20 p-1.5 md:p-1 rounded-2xl border border-white/10 backdrop-blur-3xl shadow-[0_20px_50px_rgba(0,0,0,0.8)]">
+            <form 
+              onSubmit={handleSearchSubmit} 
+              className={`relative flex items-center transition-all duration-500 ${isSearchFocused || searchQuery ? 'w-full md:w-96' : 'w-10 md:w-64'}`}
+            >
+              <input
+                ref={searchInputRef}
+                type="text"
+                placeholder="Buscar..."
+                className={`w-full bg-white/5 border border-white/10 text-white pl-8 md:pl-10 pr-4 py-2 md:py-3 rounded-xl text-[10px] md:text-xs font-bold focus:outline-none focus:border-red-600/50 transition-all ${isSearchFocused || searchQuery ? 'opacity-100' : 'opacity-0 md:opacity-100'}`}
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                onFocus={() => setIsSearchFocused(true)}
+                onBlur={() => setIsSearchFocused(false)}
+              />
+              <Search className={`absolute left-2.5 w-3.5 h-3.5 md:w-5 md:h-5 text-zinc-500`} />
+            </form>
 
-          <button 
-            onClick={() => setIsFilterOpen(!isFilterOpen)}
-            className={`p-2.5 rounded-xl border transition-all ${isFilterOpen ? 'bg-red-600 border-red-600 text-white' : 'bg-white/5 border-white/10 text-zinc-400'}`}
-          >
-            <Filter className="w-4 h-4 md:w-5 md:h-5" />
-          </button>
-          
-          <button 
-            className="lg:hidden p-2.5 text-white bg-red-600 rounded-xl" 
-            onClick={() => setIsMobileMenuOpen(true)}
-          >
-            <Menu className="w-5 h-5" />
-          </button>
+            <button 
+              onClick={() => setIsFilterOpen(!isFilterOpen)}
+              className={`p-2 md:p-2.5 rounded-xl border transition-all ${isFilterOpen ? 'bg-red-600 border-red-600 text-white' : 'bg-white/5 border-white/10 text-zinc-400'}`}
+            >
+              <Filter className="w-3.5 h-3.5 md:w-5 md:h-5" />
+            </button>
+            
+            <button 
+              className="lg:hidden p-2 md:p-2.5 text-white bg-red-600 rounded-xl" 
+              onClick={() => setIsMobileMenuOpen(true)}
+            >
+              <Menu className="w-4 h-4 md:w-5 md:h-5" />
+            </button>
+          </div>
         </div>
       </div>
 
