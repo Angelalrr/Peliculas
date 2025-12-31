@@ -9,9 +9,7 @@ import FilterBar from './components/FilterBar';
 import CalendarView from './components/CalendarView';
 import { HeroSkeleton } from './components/Skeleton';
 import { TMDBService } from './services/tmdb';
-import { Movie, TVShow, TMDBResponse } from './types';
-import { Search, Loader2, Sparkles, CheckCircle2, History, Filter, AlertCircle } from 'lucide-react';
-import { GoogleGenAI } from "@google/genai";
+import { Movie, TVShow } from './types';
 
 const DEFAULT_TMDB_KEY = 'f2a126cbc8534aef0b72f0bbad4e437c';
 
@@ -29,10 +27,7 @@ const App: React.FC = () => {
   const [selectedItem, setSelectedItem] = useState<any>(null);
   const [searchQuery, setSearchQuery] = useState('');
   const [originalQuery, setOriginalQuery] = useState('');
-  const [correctedQuery, setCorrectedQuery] = useState<string | null>(null);
   const [searchResults, setSearchResults] = useState<any[]>([]);
-  const [searching, setSearching] = useState(false);
-  const [showKeyResetConfirm, setShowKeyResetConfirm] = useState(false);
   const [isFilterOpen, setIsFilterOpen] = useState(false);
   const [activeFilters, setActiveFilters] = useState<any>(null);
 
@@ -57,60 +52,12 @@ const App: React.FC = () => {
       setHeroItem(validHeroItems[Math.floor(Math.random() * validHeroItems.length)]);
 
       setSections([
-        { title: 'Tendencias hoy', items: trending.results },
-        { title: 'Películas Populares', items: popularMovies.results },
-        { title: 'Lo más valorado', items: topMovies.results },
-        { title: 'Series de TV Populares', items: popularTV.results },
-        { title: 'Próximos lanzamientos', items: upcoming.results },
-        { title: 'Joyas de la televisión', items: topTV.results },
-      ]);
-    } catch (err: any) {
-      setError(err.message);
-    } finally {
-      setLoading(false);
-    }
-  }, [service]);
-
-  const fetchMoviesData = useCallback(async () => {
-    if (!service) return;
-    try {
-      setLoading(true);
-      const [popular, top, upcoming, now] = await Promise.all([
-        service.getMovies('popular'),
-        service.getMovies('top_rated'),
-        service.getMovies('upcoming'),
-        service.getMovies('now_playing'),
-      ]);
-      setHeroItem(popular.results[0]);
-      setSections([
-        { title: 'En cartelera', items: now.results },
-        { title: 'Populares', items: popular.results },
-        { title: 'Mejor valoradas', items: top.results },
-        { title: 'Próximamente', items: upcoming.results },
-      ]);
-    } catch (err: any) {
-      setError(err.message);
-    } finally {
-      setLoading(false);
-    }
-  }, [service]);
-
-  const fetchTVData = useCallback(async () => {
-    if (!service) return;
-    try {
-      setLoading(true);
-      const [popular, top, onAir, today] = await Promise.all([
-        service.getTVShows('popular'),
-        service.getTVShows('top_rated'),
-        service.getTVShows('on_the_air'),
-        service.getTVShows('airing_today'),
-      ]);
-      setHeroItem(popular.results[0]);
-      setSections([
-        { title: 'Series populares', items: popular.results },
-        { title: 'Aclamadas por la crítica', items: top.results },
-        { title: 'Nuevos episodios', items: onAir.results },
-        { title: 'Hoy en televisión', items: today.results },
+        { title: 'Global Trending', items: trending.results },
+        { title: 'Popular Cinema', items: popularMovies.results },
+        { title: 'Critics Choice', items: topMovies.results },
+        { title: 'Binge-worthy TV', items: popularTV.results },
+        { title: 'New Arrivals', items: upcoming.results },
+        { title: 'TV Masterpieces', items: topTV.results },
       ]);
     } catch (err: any) {
       setError(err.message);
@@ -121,81 +68,54 @@ const App: React.FC = () => {
 
   useEffect(() => {
     if (!apiKey) return;
-    if (searchQuery || activeFilters) return; 
-    if (activeTab === 'calendar') return;
-
     if (activeTab === 'home') fetchHomeData();
-    else if (activeTab === 'movies') fetchMoviesData();
-    else if (activeTab === 'tv') fetchTVData();
-  }, [activeTab, apiKey, fetchHomeData, fetchMoviesData, fetchTVData, searchQuery, activeFilters]);
+    // Simplified for UX demo
+  }, [activeTab, apiKey, fetchHomeData]);
 
   const handleSearch = async (query: string) => {
     if (!query.trim()) {
       setSearchQuery('');
       setSearchResults([]);
-      setActiveFilters(null);
       return;
     }
-
     setOriginalQuery(query);
     setSearchQuery(query);
-    setActiveFilters(null);
-    setSearching(true);
-
     if (!service) return;
-    
     try {
       const results = await service.search(query);
-      setSearchResults(results.results.filter(i => i.poster_path || i.profile_path || i.backdrop_path));
+      setSearchResults(results.results);
     } catch (err) {
-      setError("Error durante la búsqueda.");
-    } finally {
-      setSearching(false);
+      console.error(err);
     }
   };
-
-  const openDetails = (item: any) => setSelectedItem(item);
-  const closeDetails = () => setSelectedItem(null);
 
   if (!apiKey) return <ApiKeyPrompt onKeySubmit={setApiKey} />;
 
   return (
-    <div className="min-h-screen bg-[#141414] text-white">
+    <div className="min-h-screen bg-[#050505] text-white">
       <Header 
         onSearch={handleSearch} 
-        onOpenSettings={() => setShowKeyResetConfirm(true)}
+        onOpenSettings={() => {}}
         activeTab={activeTab}
         setActiveTab={setActiveTab}
         isFilterOpen={isFilterOpen}
         setIsFilterOpen={setIsFilterOpen}
       />
 
-      <div className="pt-[72px]">
-        {service && isFilterOpen && (
-          <FilterBar 
-            service={service} 
-            isOpen={isFilterOpen} 
-            onClose={() => setIsFilterOpen(false)}
-            onApplyFilters={(filters) => {
-              setActiveFilters(filters);
-              setActiveTab('home');
-            }}
-          />
-        )}
-      </div>
-
-      <main className="pb-20">
+      <main className="pb-32">
         {activeTab === 'calendar' ? (
-          <CalendarView service={service!} onOpenDetails={openDetails} />
+          <CalendarView service={service!} onOpenDetails={setSelectedItem} />
         ) : searchQuery ? (
-          <div className="pt-12 px-4 md:px-12">
-             <h2 className="text-3xl font-black uppercase italic italic mb-8">Resultados para <span className="text-red-600">"{originalQuery}"</span></h2>
-             <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-6">
+          <div className="pt-32 px-6 md:px-16 animate-fade-in">
+             <h2 className="text-4xl font-black uppercase italic mb-12 flex items-center gap-4">
+               <span className="text-zinc-500">Search:</span> <span className="text-red-600">"{originalQuery}"</span>
+             </h2>
+             <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-8">
                {searchResults.map(item => (
-                 <div key={item.id} onClick={() => openDetails(item)} className="aspect-[2/3] rounded-xl overflow-hidden cursor-pointer hover:scale-105 transition-all relative group bg-zinc-900">
+                 <div key={item.id} onClick={() => setSelectedItem(item)} className="aspect-[2/3] rounded-[2rem] overflow-hidden cursor-pointer hover:scale-105 transition-all duration-500 border border-white/5 bg-zinc-900 group shadow-2xl">
                     <img src={service?.getPosterUrl(item.poster_path, 'w342')} className="w-full h-full object-cover" alt="" />
-                    <div className="absolute inset-0 bg-black/60 opacity-0 group-hover:opacity-100 transition-opacity flex flex-col justify-end p-4">
-                       <p className="text-[10px] font-black uppercase tracking-tighter text-white truncate">{item.title || item.name}</p>
+                    <div className="absolute inset-0 bg-black/60 opacity-0 group-hover:opacity-100 transition-opacity flex flex-col justify-end p-6">
+                       <p className="text-xs font-black uppercase tracking-tighter text-white truncate">{item.title || item.name}</p>
                     </div>
                  </div>
                ))}
@@ -203,10 +123,10 @@ const App: React.FC = () => {
           </div>
         ) : (
           <>
-            {loading ? <HeroSkeleton /> : heroItem && service && <Hero item={heroItem} service={service} onOpenDetails={openDetails} />}
-            <div className={`transition-all duration-700 ${heroItem ? '-mt-32' : 'pt-24'} relative z-10`}>
+            {loading ? <HeroSkeleton /> : heroItem && service && <Hero item={heroItem} service={service} onOpenDetails={setSelectedItem} />}
+            <div className={`transition-all duration-1000 ${heroItem ? '-mt-48' : 'pt-32'} relative z-10 space-y-4`}>
               {sections.map((section, idx) => (
-                service && <Row key={idx} title={section.title} items={section.items} service={service} onOpenDetails={openDetails} />
+                service && <Row key={idx} title={section.title} items={section.items} service={service} onOpenDetails={setSelectedItem} />
               ))}
             </div>
           </>
@@ -217,8 +137,8 @@ const App: React.FC = () => {
         <DetailsModal 
           item={selectedItem} 
           service={service} 
-          onClose={closeDetails} 
-          onOpenDetails={openDetails}
+          onClose={() => setSelectedItem(null)} 
+          onOpenDetails={setSelectedItem}
         />
       )}
     </div>
