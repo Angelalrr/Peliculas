@@ -1,8 +1,8 @@
 
 import React, { useEffect, useState, useRef } from 'react';
-import { X, Play, Plus, ThumbsUp, Calendar, Clock, ExternalLink, AlertCircle, Info, Star, Users, User, MapPin, Award, Heart, RotateCcw } from 'lucide-react';
+import { X, Play, Plus, ThumbsUp, Calendar, Clock, ExternalLink, AlertCircle, Info, Star, Users, User, MapPin, Award, Heart, RotateCcw, MonitorPlay, ChevronDown } from 'lucide-react';
 import { TMDBService } from '../services/tmdb';
-import { ContentDetails, CastMember, PersonDetails } from '../types';
+import { ContentDetails, CastMember, PersonDetails, Movie, TVShow } from '../types';
 import YouTubeEmbed from './YouTubeEmbed';
 
 interface DetailsModalProps {
@@ -18,6 +18,7 @@ const DetailsModal: React.FC<DetailsModalProps> = ({ item, service, onClose, onO
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [showPlayer, setShowPlayer] = useState(false);
+  const [isMiniPlayer, setIsMiniPlayer] = useState(false);
   const modalRef = useRef<HTMLDivElement>(null);
 
   const mediaType = item.media_type || ((item.title || item.release_date) ? 'movie' : (item.name && item.first_air_date ? 'tv' : (item.name && !item.first_air_date ? 'person' : 'movie')));
@@ -28,6 +29,7 @@ const DetailsModal: React.FC<DetailsModalProps> = ({ item, service, onClose, onO
         setLoading(true);
         setError(null);
         setShowPlayer(false);
+        setIsMiniPlayer(false);
         
         if (mediaType === 'person') {
           const data = await service.getPersonDetails(item.id);
@@ -48,10 +50,19 @@ const DetailsModal: React.FC<DetailsModalProps> = ({ item, service, onClose, onO
   }, [item.id, mediaType, service]);
 
   useEffect(() => {
-    if (modalRef.current) {
-      modalRef.current.scrollTop = 0;
+    const handleScroll = () => {
+      if (!modalRef.current || !showPlayer) return;
+      const scrollPos = modalRef.current.scrollTop;
+      // Si scrolleamos más allá de la altura del video (aspect-video)
+      setIsMiniPlayer(scrollPos > 400);
+    };
+
+    const currentModal = modalRef.current;
+    if (currentModal) {
+      currentModal.addEventListener('scroll', handleScroll);
     }
-  }, [item.id]);
+    return () => currentModal?.removeEventListener('scroll', handleScroll);
+  }, [showPlayer]);
 
   if (!item) return null;
 
@@ -68,9 +79,10 @@ const DetailsModal: React.FC<DetailsModalProps> = ({ item, service, onClose, onO
           ref={modalRef}
           className="relative w-full max-w-6xl h-full md:h-auto md:max-h-[90vh] bg-[#141414] md:rounded-3xl overflow-y-auto overflow-x-hidden shadow-[0_0_80px_rgba(0,0,0,0.8)] animate-in fade-in zoom-in duration-300"
         >
+          {/* Botón de cierre bajado significativamente para móvil (top-24) */}
           <button 
             onClick={onClose}
-            className="fixed md:absolute top-6 right-6 z-[120] bg-black/60 text-white p-3 rounded-full hover:bg-red-600 transition-all border border-white/10 shadow-2xl"
+            className="fixed md:absolute top-24 right-6 md:top-8 md:right-8 z-[200] bg-black/80 text-white p-4 rounded-full hover:bg-red-600 transition-all border border-white/20 shadow-[0_0_30px_rgba(0,0,0,0.5)] active:scale-90"
           >
             <X className="w-6 h-6" />
           </button>
@@ -83,7 +95,6 @@ const DetailsModal: React.FC<DetailsModalProps> = ({ item, service, onClose, onO
           ) : personDetails ? (
             <div className="animate-in fade-in duration-700">
               <div className="grid grid-cols-1 md:grid-cols-12 gap-0 md:gap-8">
-                {/* Profile Photo Side */}
                 <div className="md:col-span-4 relative aspect-[2/3] md:aspect-auto">
                   <img 
                     src={service.getPosterUrl(personDetails.profile_path, 'original')} 
@@ -98,7 +109,6 @@ const DetailsModal: React.FC<DetailsModalProps> = ({ item, service, onClose, onO
                   </div>
                 </div>
 
-                {/* Info Side */}
                 <div className="md:col-span-8 p-8 md:p-12 space-y-10">
                   <div className="hidden md:block space-y-2">
                     <div className="flex items-center gap-3 text-red-600 font-black text-xs uppercase tracking-[0.3em]">
@@ -155,11 +165,6 @@ const DetailsModal: React.FC<DetailsModalProps> = ({ item, service, onClose, onO
                                 alt={work.title || work.name}
                                 className="w-full h-full object-cover transition-transform group-hover:scale-110 duration-500"
                               />
-                              <div className="absolute inset-0 bg-black/60 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center p-2 text-center">
-                                <p className="text-[10px] font-black uppercase tracking-tighter text-white">
-                                  {work.title || work.name}
-                                </p>
-                              </div>
                             </div>
                           </div>
                         ))}
@@ -185,17 +190,16 @@ const DetailsModal: React.FC<DetailsModalProps> = ({ item, service, onClose, onO
 
   const cast = details?.credits?.cast.slice(0, 15);
   const recommendations = details?.recommendations?.results.slice(0, 12);
-  const providers = details?.['watch/providers']?.results?.['ES']?.flatrate || [];
+  const watchData = details?.['watch/providers']?.results?.['ES'];
+  const providers = watchData?.flatrate || [];
+  const buyProviders = watchData?.buy || [];
+  const tmdbExternalLink = watchData?.link;
 
   const handlePlayTrailer = () => {
     if (trailer) {
       setShowPlayer(true);
+      setIsMiniPlayer(false);
     }
-  };
-
-  const getHeroImage = () => {
-    if (trailer) return `https://img.youtube.com/vi/${trailer.key}/maxresdefault.jpg`;
-    return service.getBackdropUrl(item.backdrop_path, 'original');
   };
 
   return (
@@ -204,11 +208,10 @@ const DetailsModal: React.FC<DetailsModalProps> = ({ item, service, onClose, onO
         ref={modalRef}
         className="relative w-full max-w-6xl h-full md:h-auto md:max-h-[90vh] bg-[#141414] md:rounded-3xl overflow-y-auto overflow-x-hidden shadow-[0_0_80px_rgba(0,0,0,0.8)] animate-in fade-in zoom-in duration-300"
       >
-        {/* Close Button */}
+        {/* Botón de cierre bajado significativamente para móvil (top-24) */}
         <button 
           onClick={onClose}
-          className="fixed md:absolute top-6 right-6 z-[120] bg-black/60 text-white p-3 rounded-full hover:bg-red-600 transition-all border border-white/10 shadow-2xl"
-          aria-label="Cerrar"
+          className="fixed md:absolute top-24 right-6 md:top-8 md:right-8 z-[200] bg-black/80 text-white p-4 rounded-full hover:bg-red-600 transition-all border border-white/20 shadow-[0_0_30px_rgba(0,0,0,0.5)] active:scale-90"
         >
           <X className="w-6 h-6" />
         </button>
@@ -218,84 +221,68 @@ const DetailsModal: React.FC<DetailsModalProps> = ({ item, service, onClose, onO
             <div className="w-12 h-12 border-4 border-red-600 border-t-transparent rounded-full animate-spin"></div>
             <p className="text-zinc-500 font-black uppercase tracking-[0.3em] text-xs">Cargando...</p>
           </div>
-        ) : error ? (
-          <div className="h-96 flex flex-col items-center justify-center gap-4 text-center px-10">
-            <AlertCircle className="w-16 h-16 text-red-600" />
-            <h3 className="text-2xl font-black italic">{error}</h3>
-            <button onClick={onClose} className="mt-4 bg-white text-black px-8 py-3 rounded-full font-black uppercase tracking-tighter">Volver</button>
-          </div>
         ) : (
           <div className="animate-in fade-in duration-700">
-            {/* Media Header / Video Player con YouTubeEmbed */}
-            <div className="relative aspect-video w-full bg-zinc-900 group overflow-hidden">
-              {showPlayer && trailer ? (
-                <div className="absolute inset-0 animate-in fade-in zoom-in duration-500 bg-black">
+            {/* Media Header / Video Player */}
+            <div className={`relative aspect-video w-full bg-zinc-900 group overflow-hidden ${isMiniPlayer ? 'h-0' : ''}`}>
+              {showPlayer && trailer && (
+                <div className={`transition-all duration-500 bg-black ${isMiniPlayer ? 'fixed bottom-8 right-8 w-80 h-45 z-[200] rounded-2xl shadow-2xl animate-in slide-in-from-right-10 overflow-hidden border border-white/10' : 'absolute inset-0 z-20'}`}>
                   <YouTubeEmbed 
                     videoId={trailer.key} 
-                    className="w-full h-full md:rounded-t-3xl shadow-2xl"
+                    className="w-full h-full"
                   />
-                  <div className="absolute top-4 left-4 z-20 pointer-events-none">
-                     <div className="bg-red-600 text-white text-[10px] font-black uppercase tracking-widest px-3 py-1 rounded-full shadow-lg">
-                        Reproduciendo Trailer
-                     </div>
-                  </div>
-                  <button 
-                    onClick={() => setShowPlayer(false)}
-                    className="absolute bottom-4 right-4 bg-black/80 hover:bg-red-600 text-white px-5 py-2.5 rounded-full text-xs font-black uppercase tracking-widest flex items-center gap-2 border border-white/10 transition-all z-20 shadow-2xl active:scale-95 hover:scale-105"
-                  >
-                    <RotateCcw className="w-4 h-4" /> Cerrar Trailer
-                  </button>
-                </div>
-              ) : (
-                <div onClick={trailer ? handlePlayTrailer : undefined} className="w-full h-full cursor-pointer overflow-hidden relative">
-                  <img
-                    src={getHeroImage()}
-                    alt={item.title || item.name}
-                    className={`w-full h-full object-cover transition-transform duration-1000 ${trailer ? 'group-hover:scale-105' : ''}`}
-                    onError={(e) => {
-                      const target = e.target as HTMLImageElement;
-                      if (target.src.includes('maxresdefault')) {
-                        target.src = `https://img.youtube.com/vi/${trailer?.key}/hqdefault.jpg`;
-                      } else {
-                        target.src = service.getBackdropUrl(item.backdrop_path, 'original');
-                      }
-                    }}
-                  />
-                  
-                  <div className="absolute inset-0 bg-gradient-to-t from-[#141414] via-[#141414]/10 to-transparent flex items-center justify-center">
-                    {trailer && (
-                      <div className="bg-red-600/90 p-6 rounded-full shadow-[0_0_50px_rgba(229,9,20,0.5)] scale-100 group-hover:scale-110 transition-all duration-300 opacity-0 group-hover:opacity-100 hidden md:flex items-center justify-center border border-white/20">
-                        <Play className="w-12 h-12 text-white fill-current translate-x-1" />
-                      </div>
-                    )}
-                  </div>
-                  
-                  <div className="absolute bottom-0 left-0 right-0 p-8 md:p-12 space-y-6 pointer-events-none">
-                    <h1 className="text-3xl md:text-6xl font-black uppercase italic tracking-tighter drop-shadow-[0_5px_15px_rgba(0,0,0,0.8)] leading-[0.9]">
-                      {item.title || item.name}
-                    </h1>
-                    
-                    <div className="flex flex-wrap items-center gap-4 pointer-events-auto">
-                      <button 
-                        onClick={(e) => { e.stopPropagation(); handlePlayTrailer(); }}
-                        disabled={!trailer}
-                        className={`flex items-center gap-3 px-8 md:px-12 py-3 md:py-4 rounded-xl font-black uppercase tracking-tighter transition-all ${trailer ? 'bg-white text-black hover:bg-zinc-200 active:scale-95 shadow-2xl' : 'bg-zinc-800 text-zinc-500 cursor-not-allowed border border-zinc-700'}`}
-                      >
-                        <Play className="fill-current w-6 h-6" /> {trailer ? 'Ver Ahora' : 'Sin Video'}
-                      </button>
-                      <button className="bg-zinc-800/80 backdrop-blur-md text-white p-3 md:p-4 rounded-xl border border-zinc-600 hover:border-white transition-all active:scale-90">
-                        <Plus className="w-6 h-6" />
-                      </button>
-                      <button className="bg-zinc-800/80 backdrop-blur-md text-white p-3 md:p-4 rounded-xl border border-zinc-600 hover:border-white transition-all active:scale-90">
-                        <ThumbsUp className="w-6 h-6" />
-                      </button>
-                    </div>
-                  </div>
+                  {isMiniPlayer && (
+                    <button 
+                      onClick={() => setIsMiniPlayer(false)}
+                      className="absolute top-2 right-2 bg-black/80 p-1.5 rounded-full text-white hover:bg-red-600 transition-colors"
+                    >
+                      <ChevronDown className="w-4 h-4" />
+                    </button>
+                  )}
+                  {!isMiniPlayer && (
+                    <button 
+                      onClick={() => setShowPlayer(false)}
+                      className="absolute bottom-4 right-4 bg-black/80 hover:bg-red-600 text-white px-5 py-2.5 rounded-full text-xs font-black uppercase tracking-widest flex items-center gap-2 border border-white/10 transition-all z-20 shadow-2xl"
+                    >
+                      <RotateCcw className="w-4 h-4" /> Cerrar
+                    </button>
+                  )}
                 </div>
               )}
+
+              <div onClick={trailer ? handlePlayTrailer : undefined} className="w-full h-full cursor-pointer relative">
+                <img
+                  src={service.getBackdropUrl(item.backdrop_path, 'original')}
+                  alt={item.title || item.name}
+                  className="w-full h-full object-cover transition-transform duration-1000 group-hover:scale-105"
+                />
+                
+                <div className="absolute inset-0 bg-gradient-to-t from-[#141414] via-[#141414]/10 to-transparent flex items-center justify-center">
+                  {trailer && (
+                    <div className="bg-red-600/90 p-6 rounded-full shadow-[0_0_50px_rgba(229,9,20,0.5)] scale-100 group-hover:scale-110 transition-all duration-300 opacity-0 group-hover:opacity-100 hidden md:flex items-center justify-center border border-white/20">
+                      <Play className="w-12 h-12 text-white fill-current translate-x-1" />
+                    </div>
+                  )}
+                </div>
+                
+                <div className="absolute bottom-0 left-0 right-0 p-8 md:p-12 space-y-6 pointer-events-none">
+                  <h1 className="text-3xl md:text-6xl font-black uppercase italic tracking-tighter drop-shadow-[0_5px_15px_rgba(0,0,0,0.8)] leading-[0.9]">
+                    {item.title || item.name}
+                  </h1>
+                  
+                  <div className="flex flex-wrap items-center gap-4 pointer-events-auto">
+                    <button 
+                      onClick={(e) => { e.stopPropagation(); handlePlayTrailer(); }}
+                      disabled={!trailer}
+                      className={`flex items-center gap-3 px-8 md:px-12 py-3 md:py-4 rounded-xl font-black uppercase tracking-tighter transition-all ${trailer ? 'bg-white text-black hover:bg-zinc-200 active:scale-95 shadow-2xl' : 'bg-zinc-800 text-zinc-500 cursor-not-allowed border border-zinc-700'}`}
+                    >
+                      <Play className="fill-current w-6 h-6" /> {trailer ? 'Ver Trailer' : 'Sin Trailer'}
+                    </button>
+                  </div>
+                </div>
+              </div>
             </div>
 
-            {/* Resto del contenido del modal... */}
             <div className="p-8 md:p-12 space-y-12 relative z-10">
               <div className="grid grid-cols-1 lg:grid-cols-12 gap-12">
                 <div className="lg:col-span-8 space-y-10">
@@ -305,11 +292,9 @@ const DetailsModal: React.FC<DetailsModalProps> = ({ item, service, onClose, onO
                       <span>{Math.round(item.vote_average * 10)}% Recomendado</span>
                     </div>
                     <span className="text-zinc-400">{item.release_date?.split('-')[0] || item.first_air_date?.split('-')[0]}</span>
-                    {details?.runtime ? (
+                    {details?.runtime && (
                       <span className="text-zinc-400 flex items-center gap-2"><Clock className="w-4 h-4" /> {Math.floor(details.runtime / 60)}h {details.runtime % 60}m</span>
-                    ) : details?.number_of_seasons ? (
-                      <span className="text-zinc-400 flex items-center gap-2"><Clock className="w-4 h-4" /> {details.number_of_seasons} Temporadas</span>
-                    ) : null}
+                    )}
                     <span className="bg-zinc-800 text-zinc-300 px-2 py-0.5 rounded border border-zinc-700 text-[10px]">4K HDR</span>
                   </div>
 
@@ -322,22 +307,63 @@ const DetailsModal: React.FC<DetailsModalProps> = ({ item, service, onClose, onO
                     </p>
                   </div>
 
-                  {providers.length > 0 && (
-                    <div className="space-y-6 pt-6 border-t border-zinc-800/40">
-                      <h4 className="text-[10px] font-black text-zinc-500 uppercase tracking-[0.3em]">Canales Disponibles</h4>
-                      <div className="flex flex-wrap gap-5">
-                        {providers.map(p => (
-                          <div key={p.provider_id} className="group/prov relative cursor-pointer">
-                            <img 
-                              src={`https://image.tmdb.org/t/p/original${p.logo_path}`} 
-                              className="w-14 h-14 rounded-2xl shadow-xl transition-all group-hover/prov:scale-110 group-hover/prov:-translate-y-1 border border-white/5" 
-                              alt={p.provider_name} 
-                            />
-                            <div className="absolute -bottom-8 left-1/2 -translate-x-1/2 text-[10px] bg-black/90 text-white px-3 py-1 rounded-full border border-zinc-800 opacity-0 group-hover/prov:opacity-100 transition-opacity whitespace-nowrap z-50">
-                              {p.provider_name}
+                  {(providers.length > 0 || buyProviders.length > 0) && (
+                    <div className="space-y-8 pt-8 border-t border-zinc-800/40">
+                      <div className="space-y-6">
+                        <h4 className="text-[10px] font-black text-zinc-500 uppercase tracking-[0.3em] flex items-center gap-2">
+                          <ExternalLink className="w-4 h-4" /> Plataformas Disponibles
+                        </h4>
+                        
+                        <div className="flex flex-col gap-6">
+                          {providers.length > 0 && (
+                            <div className="space-y-4">
+                              <p className="text-xs font-bold text-zinc-400">Incluido en suscripción:</p>
+                              <div className="flex flex-wrap gap-5">
+                                {providers.map(p => (
+                                  <a 
+                                    key={p.provider_id} 
+                                    href={tmdbExternalLink}
+                                    target="_blank"
+                                    rel="noreferrer"
+                                    className="group/prov relative flex flex-col items-center gap-2"
+                                  >
+                                    <img 
+                                      src={`https://image.tmdb.org/t/p/original${p.logo_path}`} 
+                                      className="w-14 h-14 rounded-2xl shadow-xl transition-all group-hover/prov:scale-110 group-hover/prov:-translate-y-1 border border-white/5 ring-0 group-hover/prov:ring-4 ring-red-600/20" 
+                                      alt={p.provider_name} 
+                                    />
+                                    <span className="text-[8px] font-black uppercase tracking-widest text-zinc-500 group-hover:text-white transition-colors">
+                                      {p.provider_name}
+                                    </span>
+                                  </a>
+                                ))}
+                              </div>
                             </div>
-                          </div>
-                        ))}
+                          )}
+
+                          {buyProviders.length > 0 && (
+                            <div className="space-y-4">
+                              <p className="text-xs font-bold text-zinc-400">Alquiler o Compra:</p>
+                              <div className="flex flex-wrap gap-5">
+                                {buyProviders.map(p => (
+                                  <a 
+                                    key={p.provider_id} 
+                                    href={tmdbExternalLink}
+                                    target="_blank"
+                                    rel="noreferrer"
+                                    className="group/prov relative flex flex-col items-center gap-2 opacity-70 hover:opacity-100 transition-opacity"
+                                  >
+                                    <img 
+                                      src={`https://image.tmdb.org/t/p/original${p.logo_path}`} 
+                                      className="w-10 h-10 rounded-xl grayscale group-hover/prov:grayscale-0 transition-all border border-white/5" 
+                                      alt={p.provider_name} 
+                                    />
+                                  </a>
+                                ))}
+                              </div>
+                            </div>
+                          )}
+                        </div>
                       </div>
                     </div>
                   )}
@@ -355,12 +381,6 @@ const DetailsModal: React.FC<DetailsModalProps> = ({ item, service, onClose, onO
                         ))}
                       </div>
                     </div>
-                    {details?.status && (
-                      <div className="pt-4 border-t border-zinc-800">
-                        <span className="text-zinc-600 text-[10px] font-black uppercase tracking-widest">Producción</span>
-                        <p className="text-red-600 font-black text-sm uppercase mt-1 tracking-tighter">{details.status}</p>
-                      </div>
-                    )}
                   </div>
                 </div>
               </div>
@@ -393,16 +413,13 @@ const DetailsModal: React.FC<DetailsModalProps> = ({ item, service, onClose, onO
                               <User className="w-12 h-12" />
                             </div>
                           )}
-                          <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-transparent to-transparent opacity-0 group-hover/cast:opacity-100 transition-opacity" />
                         </div>
-                        <div className="space-y-0.5">
-                          <p className="text-white font-black text-xs uppercase tracking-tighter truncate group-hover/cast:text-red-600 transition-colors">
-                            {person.name}
-                          </p>
-                          <p className="text-zinc-500 text-[10px] font-bold italic truncate">
-                            {person.character}
-                          </p>
-                        </div>
+                        <p className="text-white font-black text-xs uppercase tracking-tighter truncate group-hover/cast:text-red-600 transition-colors">
+                          {person.name}
+                        </p>
+                        <p className="text-zinc-500 text-[10px] font-bold italic truncate">
+                          {person.character}
+                        </p>
                       </div>
                     ))}
                   </div>
@@ -421,18 +438,17 @@ const DetailsModal: React.FC<DetailsModalProps> = ({ item, service, onClose, onO
                      <div 
                         key={rec.id} 
                         onClick={() => onOpenDetails(rec)} 
-                        className="group bg-zinc-900 rounded-2xl overflow-hidden cursor-pointer transition-all hover:ring-2 hover:ring-red-600/50 hover:shadow-[0_10px_30px_rgba(229,9,20,0.1)] active:scale-95"
+                        className="group bg-zinc-900 rounded-2xl overflow-hidden cursor-pointer transition-all hover:ring-2 hover:ring-red-600/50"
                       >
                         <div className="aspect-[2/3] relative overflow-hidden">
                           <img 
                             src={service.getPosterUrl(rec.poster_path, 'w342')} 
                             className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110" 
-                            alt={rec.title || rec.name} 
-                            loading="lazy"
+                            alt={(rec as Movie).title || (rec as TVShow).name} 
                           />
                         </div>
-                        <div className="p-4 space-y-1">
-                           <p className="text-[10px] font-black truncate text-zinc-200 uppercase tracking-tighter">{rec.title || rec.name}</p>
+                        <div className="p-4">
+                           <p className="text-[10px] font-black truncate text-zinc-200 uppercase tracking-tighter">{(rec as Movie).title || (rec as TVShow).name}</p>
                         </div>
                      </div>
                    ))}
