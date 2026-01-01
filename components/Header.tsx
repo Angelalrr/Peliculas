@@ -33,6 +33,12 @@ const Header: React.FC<HeaderProps> = ({ onSearch, onOpenSettings, activeTab, se
     }
   };
 
+  const clearSearch = () => {
+    setSearchQuery('');
+    onSearch('');
+    if (searchInputRef.current) searchInputRef.current.focus();
+  };
+
   const navItems = [
     { id: 'home', label: 'Inicio' },
     { id: 'movies', label: 'Cine' },
@@ -70,7 +76,6 @@ const Header: React.FC<HeaderProps> = ({ onSearch, onOpenSettings, activeTab, se
         </div>
 
         <div className="flex items-center gap-2 md:gap-6 flex-1 justify-end">
-          {/* El "cuadro negro" solicitado, ahora con más presencia y desplazado por el pt-10 del nav */}
           <div className="flex items-center gap-1.5 md:gap-4 bg-black/90 md:bg-black/20 p-1.5 md:p-1 rounded-2xl border border-white/10 backdrop-blur-3xl shadow-[0_20px_50px_rgba(0,0,0,0.8)]">
             <form 
               onSubmit={handleSearchSubmit} 
@@ -80,20 +85,35 @@ const Header: React.FC<HeaderProps> = ({ onSearch, onOpenSettings, activeTab, se
                 ref={searchInputRef}
                 type="text"
                 placeholder="Buscar..."
-                className={`w-full bg-white/5 border border-white/10 text-white pl-8 md:pl-10 pr-4 py-2 md:py-3 rounded-xl text-[10px] md:text-xs font-bold focus:outline-none focus:border-red-600/50 transition-all ${isSearchFocused || searchQuery ? 'opacity-100' : 'opacity-0 md:opacity-100'}`}
+                className={`w-full bg-white/5 border border-white/10 text-white pl-8 md:pl-10 pr-10 py-2 md:py-3 rounded-xl text-[10px] md:text-xs font-bold focus:outline-none focus:border-red-600/50 transition-all ${isSearchFocused || searchQuery ? 'opacity-100' : 'opacity-0 md:opacity-100'}`}
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
                 onFocus={() => setIsSearchFocused(true)}
                 onBlur={() => setIsSearchFocused(false)}
               />
               <Search className={`absolute left-2.5 w-3.5 h-3.5 md:w-5 md:h-5 text-zinc-500`} />
+              
+              {searchQuery && (
+                <button 
+                  type="button"
+                  onClick={clearSearch}
+                  className="absolute right-2.5 p-1 rounded-lg hover:bg-white/10 transition-colors"
+                >
+                  <X className="w-3.5 h-3.5 md:w-4 md:h-4 text-zinc-400" />
+                </button>
+              )}
             </form>
 
             <button 
               onClick={() => setIsFilterOpen(!isFilterOpen)}
-              className={`p-2 md:p-2.5 rounded-xl border transition-all ${isFilterOpen ? 'bg-red-600 border-red-600 text-white' : 'bg-white/5 border-white/10 text-zinc-400'}`}
+              className={`p-2 md:p-2.5 rounded-xl border transition-all ${isFilterOpen ? 'bg-red-600 border-red-600 text-white' : 'bg-white/5 border-white/10 text-zinc-400 hover:border-white/20'}`}
+              title={isFilterOpen ? "Cerrar filtros" : "Abrir filtros"}
             >
-              <Filter className="w-3.5 h-3.5 md:w-5 md:h-5" />
+              {isFilterOpen ? (
+                <X className="w-3.5 h-3.5 md:w-5 md:h-5 animate-in fade-in rotate-90 duration-300" />
+              ) : (
+                <Filter className="w-3.5 h-3.5 md:w-5 md:h-5 animate-in fade-in duration-300" />
+              )}
             </button>
             
             <button 
