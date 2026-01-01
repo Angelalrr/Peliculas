@@ -127,7 +127,7 @@ const Header: React.FC<HeaderProps> = ({ onSearch, onOpenSettings, activeTab, se
       </div>
 
       {/* Mobile Menu Overlay */}
-      <div className={`fixed inset-0 bg-[#050505] z-[1100] p-10 flex flex-col gap-8 transition-transform duration-500 ${isMobileMenuOpen ? 'translate-x-0' : 'translate-x-full'}`}>
+      <div className={`fixed inset-0 bg-[#050505] z-[1100] p-10 flex flex-col gap-8 transition-all duration-500 ${isMobileMenuOpen ? 'translate-x-0 opacity-100 visible' : 'translate-x-full opacity-0 invisible pointer-events-none'}`}>
         <button onClick={() => setIsMobileMenuOpen(false)} className="self-end p-2 bg-white/5 rounded-full"><X className="w-8 h-8" /></button>
         {navItems.map((item) => (
           <button 

@@ -53,10 +53,7 @@ const Row: React.FC<RowProps> = ({ title, items, service, onOpenDetails }) => {
           {items.map((item, idx) => (
             <div
               key={`${item.id}-${idx}`}
-              onClick={(e) => {
-                e.stopPropagation();
-                onOpenDetails(item);
-              }}
+              onClick={() => onOpenDetails(item)}
               className="flex-none w-44 md:w-72 aspect-[2/3] relative cursor-pointer group/card rounded-[2.5rem] transition-all duration-500 md:hover:scale-[1.05] md:hover:-translate-y-4 md:hover:z-50 border border-white/5 bg-zinc-900 shadow-2xl active:scale-95 touch-manipulation select-none"
             >
               <img
@@ -66,7 +63,6 @@ const Row: React.FC<RowProps> = ({ title, items, service, onOpenDetails }) => {
                 loading="lazy"
               />
               
-              {/* Overlay (solo visible en escritorio/hover) */}
               <div className="absolute inset-0 bg-gradient-to-t from-[#050505] via-[#050505]/20 to-transparent opacity-0 md:group-hover/card:opacity-100 transition-all duration-500 rounded-[2.5rem] flex flex-col justify-end p-8 pointer-events-none">
                 <div className="space-y-4 translate-y-8 md:group-hover/card:translate-y-0 transition-transform duration-700">
                   <div className="flex items-center justify-between">

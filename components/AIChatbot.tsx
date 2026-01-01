@@ -75,7 +75,6 @@ const AIChatbot: React.FC<AIChatbotProps> = ({ onOpenDetails, service, visibleCo
 
   const processAIResponse = async (jsonText: string) => {
     try {
-      // Find JSON if it's embedded in text since nano banana models might not return pure JSON without responseMimeType
       const jsonMatch = jsonText.match(/\{[\s\S]*\}/);
       const data = JSON.parse(jsonMatch ? jsonMatch[0] : jsonText || "{}");
       let recs: any[] = [];
@@ -106,7 +105,6 @@ const AIChatbot: React.FC<AIChatbotProps> = ({ onOpenDetails, service, visibleCo
 
     try {
       if (base64Image) {
-        // Fix: Use correct parts structure for multimodal input and remove unsupported JSON config for gemini-2.5-flash-image (nano banana model)
         const response = await ai.models.generateContent({
           model: 'gemini-2.5-flash-image',
           contents: {
@@ -121,7 +119,6 @@ const AIChatbot: React.FC<AIChatbotProps> = ({ onOpenDetails, service, visibleCo
         throw new Error("No capture");
       }
     } catch (error) {
-      // Fallback a contexto textual si la captura falla
       const prompt = `Analiza mi pantalla actual. Estoy en la sección "${visibleContext?.activeTab}". La película destacada es "${visibleContext?.hero}". También veo: ${visibleContext?.visibleTitles.join(', ')}. Actúa como si estuvieras viéndolo realmente.`;
       const response = await ai.models.generateContent({
         model: 'gemini-3-flash-preview',
@@ -187,18 +184,18 @@ const AIChatbot: React.FC<AIChatbotProps> = ({ onOpenDetails, service, visibleCo
   };
 
   return (
-    <div className="fixed bottom-24 right-6 md:bottom-32 z-[2000] flex flex-col items-end">
+    <div className="fixed bottom-24 right-6 md:bottom-32 z-[2000] flex flex-col items-end pointer-events-none">
       <button
         onClick={() => { setIsOpen(!isOpen); if (isOpen && onCloseChat) onCloseChat(); }}
-        className={`p-4 rounded-2xl shadow-[0_0_30px_rgba(229,9,20,0.3)] transition-all duration-500 group flex items-center gap-3 ${
+        className={`p-4 rounded-2xl shadow-[0_0_30px_rgba(229,9,20,0.3)] transition-all duration-500 group flex items-center gap-3 pointer-events-auto ${
           isOpen ? 'bg-zinc-800 rotate-90 scale-90' : 'bg-red-600 hover:bg-red-700 hover:scale-110'
         }`}
       >
         {isOpen ? <X className="w-6 h-6 text-white" /> : <Sparkles className="w-6 h-6 text-white animate-pulse" />}
       </button>
 
-      <div className={`mt-4 w-[90vw] md:w-[420px] h-[600px] bg-black/95 backdrop-blur-3xl border border-white/10 rounded-[2.5rem] shadow-2xl flex flex-col overflow-hidden transition-all duration-500 origin-bottom-right ${
-        isOpen ? 'scale-100 opacity-100 translate-y-0' : 'scale-0 opacity-0 translate-y-10 pointer-events-none'
+      <div className={`mt-4 w-[90vw] md:w-[420px] h-[600px] bg-black/95 backdrop-blur-3xl border border-white/10 rounded-[2.5rem] shadow-2xl flex flex-col overflow-hidden transition-all duration-500 origin-bottom-right pointer-events-auto ${
+        isOpen ? 'scale-100 opacity-100 translate-y-0 visible' : 'scale-0 opacity-0 translate-y-10 invisible pointer-events-none'
       }`}>
         <div className="p-6 border-b border-white/5 bg-red-600/5 flex items-center justify-between">
           <div className="flex items-center gap-3">
@@ -208,7 +205,7 @@ const AIChatbot: React.FC<AIChatbotProps> = ({ onOpenDetails, service, visibleCo
               <div className="flex items-center gap-1.5"><span className="w-1.5 h-1.5 bg-green-500 rounded-full animate-pulse"></span><span className="text-[8px] font-black text-zinc-500 uppercase">Live Vision</span></div>
             </div>
           </div>
-          <button onClick={handleVisionAnalysis} disabled={isCapturing || isTyping} className="p-2.5 bg-white/5 hover:bg-red-600 rounded-xl transition-all"><Camera className="w-4 h-4 text-zinc-400 group-hover:text-white" /></button>
+          <button onClick={handleVisionAnalysis} disabled={isCapturing || isTyping} className="p-2.5 bg-white/5 hover:bg-red-600 rounded-xl transition-all"><Camera className="w-4 h-4 text-zinc-400" /></button>
         </div>
 
         <div className="flex-1 overflow-y-auto p-6 space-y-8 no-scrollbar">
@@ -249,7 +246,6 @@ const AIChatbot: React.FC<AIChatbotProps> = ({ onOpenDetails, service, visibleCo
           </div>
         </form>
       </div>
-      <style>{`@keyframes scan { 0% { top: 0; } 100% { top: 100%; } }`}</style>
     </div>
   );
 };
