@@ -1,8 +1,9 @@
+
 <!DOCTYPE html>
 <html lang="es">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <meta name="referrer" content="strict-origin-when-cross-origin" />
     <title>CineWave - Experiencia Pro</title>
     <script src="https://cdn.tailwindcss.com"></script>
@@ -20,6 +21,9 @@
             margin: 0;
             overflow-x: hidden;
             letter-spacing: -0.01em;
+            /* touch-action: cross-slide-y o manipulation asegura que el scroll horizontal no bloquee el click */
+            touch-action: manipulation;
+            -webkit-tap-highlight-color: transparent;
         }
         
         /* Custom Smooth Scroll */
@@ -37,7 +41,6 @@
         ::-webkit-scrollbar-thumb {
             background: rgba(255, 255, 255, 0.1);
             border-radius: 10px;
-            transition: background 0.3s;
         }
         ::-webkit-scrollbar-thumb:hover {
             background: var(--accent);
@@ -47,11 +50,6 @@
         @keyframes revealItem {
             from { opacity: 0; transform: translateY(20px) scale(0.98); }
             to { opacity: 1; transform: translateY(0) scale(1); }
-        }
-
-        @keyframes shimmer {
-            0% { background-position: -200% 0; }
-            100% { background-position: 200% 0; }
         }
 
         .animate-reveal {
@@ -68,15 +66,32 @@
             display: none;
         }
 
-        /* Mask for smooth edge fading on rows */
         .row-mask {
             mask-image: linear-gradient(to right, transparent, black 5%, black 95%, transparent);
+            -webkit-mask-image: linear-gradient(to right, transparent, black 5%, black 95%, transparent);
         }
         
-        /* Card Glow Effect */
-        .card-glow:hover {
-            box-shadow: 0 0 30px rgba(229, 9, 20, 0.2);
-            border-color: rgba(229, 9, 20, 0.4);
+        /* Optimizaciones para Celulares */
+        @media (hover: none) {
+            .group\/card {
+                /* Asegurar que la tarjeta sea reactiva al toque */
+                -webkit-user-select: none;
+                user-select: none;
+            }
+            .group\/card:active {
+                transform: scale(0.94) !important;
+                transition: transform 0.1s ease-out !important;
+                filter: brightness(0.7);
+            }
+            /* En móvil no queremos que el overlay de hover bloquee el área de click */
+            .group\/card .opacity-0 {
+                display: none !important;
+            }
+        }
+
+        @keyframes scan { 
+            0% { top: 0; } 
+            100% { top: 100%; } 
         }
     </style>
 <script type="importmap">

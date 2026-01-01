@@ -132,7 +132,6 @@ const App: React.FC = () => {
     else if (activeTab === 'movies') fetchMoviesData();
     else if (activeTab === 'tv') fetchTVData();
     
-    // Al cambiar de pestaña, limpiamos la búsqueda para evitar bloqueos visuales
     setSearchQuery('');
     setSearchResults([]);
   }, [activeTab, apiKey, fetchHomeData, fetchMoviesData, fetchTVData]);
@@ -171,10 +170,14 @@ const App: React.FC = () => {
     }
   };
 
+  const handleOpenDetails = (item: any) => {
+    setSelectedItem(item);
+  };
+
   if (!apiKey) return <ApiKeyPrompt onKeySubmit={setApiKey} />;
 
   return (
-    <div className="min-h-screen bg-[#050505] text-white selection:bg-red-600 selection:text-white">
+    <div className="min-h-screen bg-[#050505] text-white selection:bg-red-600 selection:text-white flex flex-col">
       <Header 
         onSearch={handleSearch} 
         onOpenSettings={() => setApiKey(null)}
@@ -185,7 +188,6 @@ const App: React.FC = () => {
       />
 
       <FilterBar isOpen={isFilterOpen} onClose={() => setIsFilterOpen(false)} service={service!} onApplyFilters={(f) => {
-        // Al aplicar filtros desde el buscador, los tratamos como búsqueda
         setSearchQuery('Filtrado');
         setIsFilterOpen(false);
         service.discover(f.type, f).then(res => setSearchResults(res.results));
@@ -199,9 +201,9 @@ const App: React.FC = () => {
         onSelectAI={() => setIsChatOpen(true)}
       />
 
-      <main className="relative pb-40">
+      <main className="relative pb-40 flex-1">
         {activeTab === 'calendar' ? (
-          <div className="pt-32 animate-reveal"><CalendarView service={service!} onOpenDetails={setSelectedItem} /></div>
+          <div className="pt-32 animate-reveal"><CalendarView service={service!} onOpenDetails={handleOpenDetails} /></div>
         ) : searchQuery ? (
           <div className="pt-40 px-6 md:px-16 animate-reveal">
              <div className="flex flex-col md:flex-row md:items-center gap-4 mb-16">
@@ -215,9 +217,9 @@ const App: React.FC = () => {
              
              <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-6 md:gap-10">
                {searchResults.map((item, idx) => (
-                 <div key={`${item.id}-${idx}`} onClick={() => setSelectedItem(item)} className="group relative aspect-[2/3] rounded-[2rem] overflow-hidden cursor-pointer transition-all duration-700 hover:scale-105 border border-white/5 bg-zinc-900 shadow-2xl animate-reveal" style={{ animationDelay: `${idx * 50}ms` }}>
-                    <img src={service?.getPosterUrl(item.poster_path, 'w500')} className="w-full h-full object-cover transition-transform duration-1000 group-hover:scale-110" />
-                    <div className="absolute inset-0 bg-gradient-to-t from-black via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-all p-4 flex flex-col justify-end">
+                 <div key={`${item.id}-${idx}`} onClick={() => handleOpenDetails(item)} className="group relative aspect-[2/3] rounded-[2rem] overflow-hidden cursor-pointer transition-all duration-700 md:hover:scale-105 border border-white/5 bg-zinc-900 shadow-2xl animate-reveal active:scale-95" style={{ animationDelay: `${idx * 50}ms` }}>
+                    <img src={service?.getPosterUrl(item.poster_path, 'w500')} className="w-full h-full object-cover transition-transform duration-1000 md:group-hover:scale-110" alt="" />
+                    <div className="absolute inset-0 bg-gradient-to-t from-black via-transparent to-transparent opacity-0 md:group-hover:opacity-100 transition-all p-4 flex flex-col justify-end pointer-events-none">
                        <p className="text-[10px] font-black uppercase tracking-tighter text-white">{item.title || item.name}</p>
                     </div>
                  </div>
@@ -226,19 +228,19 @@ const App: React.FC = () => {
           </div>
         ) : (
           <>
-            {loading ? <HeroSkeleton /> : heroItem && service && <Hero item={heroItem} service={service} onOpenDetails={setSelectedItem} />}
+            {loading ? <HeroSkeleton /> : heroItem && service && <Hero item={heroItem} service={service} onOpenDetails={handleOpenDetails} />}
             <div className={`transition-all duration-1000 ${heroItem && !loading ? '-mt-24' : 'pt-32'} relative z-10`}>
               {loading ? (
                 <div className="px-6 md:px-16 space-y-20"><div className="h-8 w-64 bg-zinc-900 rounded-full animate-pulse"></div><div className="flex gap-6 overflow-hidden"><CardSkeleton/><CardSkeleton/><CardSkeleton/></div></div>
               ) : (
                 <div className="space-y-16 md:space-y-24">
                   {activeTab === 'home' && top10Movies.length > 0 && (
-                    <Top10Podium items={top10Movies} service={service!} onOpenDetails={setSelectedItem} />
+                    <Top10Podium items={top10Movies} service={service!} onOpenDetails={handleOpenDetails} />
                   )}
 
                   {sections.map((section, idx) => (
                     <div key={idx} className="animate-reveal" style={{ animationDelay: `${idx * 150}ms` }}>
-                      <Row title={section.title} items={section.items} service={service!} onOpenDetails={setSelectedItem} />
+                      <Row title={section.title} items={section.items} service={service!} onOpenDetails={handleOpenDetails} />
                     </div>
                   ))}
                 </div>
@@ -248,23 +250,23 @@ const App: React.FC = () => {
         )}
       </main>
 
-      {/* Renderizado del Modal al final para garantizar z-index superior */}
-      {selectedItem && service && (
-        <DetailsModal 
-          item={selectedItem} 
-          service={service} 
-          onClose={() => setSelectedItem(null)} 
-          onOpenDetails={setSelectedItem} 
-        />
-      )}
-
       <AIChatbot 
-        onOpenDetails={setSelectedItem} 
+        onOpenDetails={handleOpenDetails} 
         service={service!} 
         visibleContext={currentVisualContext}
         forceOpen={isChatOpen}
         onCloseChat={() => setIsChatOpen(false)}
       />
+
+      {/* Modal renderizado al final del DOM para máxima prioridad de capa en móviles */}
+      {selectedItem && service && (
+        <DetailsModal 
+          item={selectedItem} 
+          service={service} 
+          onClose={() => setSelectedItem(null)} 
+          onOpenDetails={handleOpenDetails} 
+        />
+      )}
     </div>
   );
 };
